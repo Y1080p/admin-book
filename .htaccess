@@ -1,0 +1,25 @@
+# 启用重写引擎
+RewriteEngine On
+
+# 设置默认字符集
+AddDefaultCharset UTF-8
+
+# 设置目录索引文件
+DirectoryIndex index.php index.html
+
+# 允许访问所有文件
+Require all granted
+
+# 设置PHP配置（如果需要）
+# php_value upload_max_filesize 10M
+# php_value post_max_size 10M
+# php_value max_execution_time 300
+
+# 处理CORS预检请求
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=200,L]
+
+# 如果请求的不是真实文件或目录，重写到index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . index.php [L]

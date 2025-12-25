@@ -1,0 +1,299 @@
+/* 全局样式重置 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Microsoft Yahei", sans-serif;
+}
+
+/* 左侧导航栏 */
+.sidebar {
+    width: 200px;
+    height: 100vh;
+    background-color: #2d3a4b;
+    color: #fff;
+    position: fixed;
+    top: 0;
+    left: 0;
+    padding-top: 20px;
+}
+.sidebar .logo {
+    padding: 0 20px 20px;
+    font-size: 20px;
+    border-bottom: 1px solid #445566;
+}
+.sidebar ul {
+    list-style: none;
+}
+.sidebar li a {
+    display: block;
+    padding: 12px 20px;
+    color: #ccc;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+.sidebar li a:hover, .sidebar li a.active {
+    background-color: #1e2732;
+    color: #fff;
+}
+.sidebar li i {
+    margin-right: 10px;
+}
+
+/* 顶部栏 */
+.topbar {
+    margin-left: 200px;
+    height: 60px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+}
+.topbar .random-joke {
+    color: #666;
+    font-size: 14px;
+}
+.topbar .user-info a {
+    color: #e53935;
+    text-decoration: none;
+    margin-left: 10px;
+}
+
+/* 主内容区 */
+.main {
+    margin-left: 200px;
+    padding: 20px;
+}
+.search-bar {
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.search-bar select, .search-bar input {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+.search-bar button {
+    padding: 8px 15px;
+    background-color: #409eff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.search-bar .reset-btn {
+    background-color: #fff;
+    color: #666;
+    border: 1px solid #ddd;
+}
+
+/* 操作按钮组 */
+.btn-group {
+    margin-bottom: 15px;
+}
+.btn-group button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    cursor: pointer;
+    margin-right: 5px;
+}
+.btn-group .add-btn {
+    background-color: #67c23a;
+}
+.btn-group .edit-btn {
+    background-color: #909399;
+}
+.btn-group .del-btn {
+    background-color: #f56c6c;
+}
+
+/* 表格样式 */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+}
+table th, table td {
+    border: 1px solid #eee;
+    padding: 10px;
+}
+table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+table td img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+table td .status-switch {
+    display: inline-block;
+    width: 40px;
+    height: 20px;
+    background-color: #ccc;
+    border-radius: 10px;
+    position: relative;
+    cursor: pointer;
+}
+table td .status-switch.on {
+    background-color: #67c23a;
+}
+table td .status-switch::after {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background-color: #fff;
+    top: 2px;
+    left: 2px;
+    transition: all 0.3s;
+}
+table td .status-switch.on::after {
+    left: 22px;
+}
+table td a {
+    color: #409eff;
+    text-decoration: none;
+    margin: 0 5px;
+}
+
+/* 分页 */
+.pagination {
+    margin-top: 20px;
+    text-align: right;
+}
+.pagination a, .pagination span {
+    display: inline-block;
+    padding: 5px 10px;
+    border: 1px solid #ddd;
+    margin: 0 2px;
+    text-decoration: none;
+    color: #666;
+}
+.pagination a:hover, .pagination .current {
+    background-color: #409eff;
+    color: #fff;
+    border-color: #409eff;
+}
+
+/* 模态对话框 */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-dialog {
+    background-color: #fff;
+    border-radius: 8px;
+    width: 500px;
+    max-width: 90%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #999;
+}
+
+.modal-close:hover {
+    color: #666;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: #333;
+}
+
+.form-group input, .form-group select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.form-row {
+    display: flex;
+    gap: 10px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+.modal-footer {
+    padding: 16px 20px;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.btn-cancel {
+    background-color: #f5f5f5;
+    color: #666;
+}
+
+.btn-cancel:hover {
+    background-color: #e8e8e8;
+}
+
+.btn-confirm {
+    background-color: #409eff;
+    color: #fff;
+}
+
+.btn-confirm:hover {
+    background-color: #66b1ff;
+}
