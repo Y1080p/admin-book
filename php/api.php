@@ -23,7 +23,18 @@ if (in_array($origin, $allowedOrigins)) {
 // 3. 统一响应格式
 header('Content-Type: application/json; charset=utf-8');
 
-// 4. 引入数据库连接
+// 4. 配置 session cookie 参数（跨域需要）
+$isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443;
+session_set_cookie_params([
+    'lifetime' => 86400,
+    'path' => '/',
+    'domain' => '',  // 空字符串表示当前域名
+    'secure' => $isHttps,  // HTTPS 环境设为 true，本地 HTTP 设为 false
+    'httponly' => true,
+    'samesite' => 'lax'  // 允许跨站点导航携带 cookie
+]);
+
+// 5. 引入数据库连接
 require_once '../SQL Connection/db_connect.php';
 
 // 获取PDO连接
@@ -45,9 +56,11 @@ function sendResponse($success, $data = null, $message = '', $code = 200) {
     exit();
 }
 
+// 启动 session（需要在所有请求之前）
+session_start();
+
 // 检查登录状态
 if ($method === 'GET' && $action === 'auth/check') {
-    session_start();
     if (isset($_SESSION['user_id'])) {
         sendResponse(true, [
             'user_id' => $_SESSION['user_id'],
@@ -57,6 +70,57 @@ if ($method === 'GET' && $action === 'auth/check') {
     } else {
         sendResponse(false, null, '用户未登录', 401);
     }
+}
+
+// 登录接口
+if ($method === 'POST' && $action === 'auth/login') {
+    try {
+        $input = json_decode(file_get_contents('php://input'), true);
+
+        if (!isset($input['username'], $input['password'])) {
+            sendResponse(false, null, '缺少用户名或密码', 400);
+        }
+
+        $username = trim($input['username']);
+        $password = trim($input['password']);
+
+        // 查询用户
+        $stmt = $pdo->prepare("SELECT id, username, password, role FROM users WHERE username = ? AND status = 1");
+        $stmt->execute([$username]);
+        $user = $stmt->fetch();
+
+        if (!$user) {
+            sendResponse(false, null, '用户名或密码错误', 401);
+        }
+
+        if ($user['password'] !== $password) {
+            sendResponse(false, null, '用户名或密码错误', 401);
+        }
+
+        if ($user['role'] === '用户') {
+            sendResponse(false, null, '该账号无权限登录后台系统', 403);
+        }
+
+        // 设置 session
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['username'] = $user['username'];
+        $_SESSION['role'] = $user['role'];
+
+        sendResponse(true, [
+            'user_id' => $user['id'],
+            'username' => $user['username'],
+            'role' => $user['role']
+        ], '登录成功');
+    } catch (PDOException $e) {
+        sendResponse(false, null, '登录失败: ' . $e->getMessage(), 500);
+    }
+}
+
+// 登出接口
+if ($method === 'POST' && $action === 'auth/logout') {
+    session_unset();
+    session_destroy();
+    sendResponse(true, null, '登出成功');
 }
 
 // 获取所有图书（兼容前端books/list接口）
