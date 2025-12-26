@@ -1,14 +1,41 @@
 <?php
+// 1. 优先处理OPTIONS预请求（AJAX跨域必加，避免浏览器拦截预请求）
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
+// 2. 配置信任的跨域域名（本地开发环境 + 线上前端域名）
+$allowedOrigins = [
+    'http://localhost:3005', 
+    'http://127.0.0.1:3005',
+    'https://stunning-biscochitos-49d12b.netlify.app' // 替换成你的线上前端域名
+];
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+
+// 3. 仅给信任域名返回CORS头（安全规范，避免任意域名调用）
+if (in_array($origin, $allowedOrigins)) {
+    header("Access-Control-Allow-Origin: $origin");
+    header('Access-Control-Allow-Credentials: true');
+    // 适配AJAX接口的常用请求方法（GET/POST覆盖绝大多数场景）
+    header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type');
+}
+
+// 4. 统一设置JSON响应格式（前置配置，避免后续输出混乱）
+header('Content-Type: application/json; charset=utf-8');
+
+// 5. 原有session逻辑（必须移到CORS之后，避免header冲突报错）
 session_start();
 
-// 检查用户是否登录
+// 6. 原有登录检查逻辑（保留核心，优化状态码更规范）
 if (!isset($_SESSION['user_id'])) {
-    header('Content-Type: application/json');
+    http_response_code(401); // 新增401未授权状态码，前端更易识别
     echo json_encode(['success' => false, 'message' => '请先登录']);
     exit();
 }
 
-// 引入数据库连接函数
+// 7. 原有数据库连接逻辑（完全保留）
 require_once '../SQL Connection/db_connect.php';
 
 // 获取POST参数
