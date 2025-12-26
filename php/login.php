@@ -123,6 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <title>登录 - 后台管理系统</title>
+    <link rel="stylesheet" href="../css/style.css">
     <style>
         * {
             margin: 0;

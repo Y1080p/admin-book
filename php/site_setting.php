@@ -18,7 +18,7 @@ $site_keywords = '图书,管理,系统';
 <head>
     <meta charset="UTF-8">
     <title>网站设置 - 后台管理</title>
-    <link rel="stylesheet" href="/admin-book/css/user_manage.css">
+    <link rel="stylesheet" href="/css/user_manage.css">
 </head>
 <body>
     <!-- 左侧导航栏 -->

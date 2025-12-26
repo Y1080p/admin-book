@@ -208,7 +208,7 @@ function getPageUrl($page_num) {
 <head>
     <meta charset="UTF-8">
     <title>群聊管理 - 后台管理</title>
-    <link rel="stylesheet" href="/admin-book/css/user_manage.css">
+    <link rel="stylesheet" href="/css/user_manage.css">
     <style>
         /* 状态切换开关样式 */
         .status-switch {

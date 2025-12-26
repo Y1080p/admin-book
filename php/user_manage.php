@@ -282,7 +282,7 @@ function getUserPageUrl($page_num) {
 <head>
     <meta charset="UTF-8">
     <title>用户管理 - 图书管理系统</title>
-    <link rel="stylesheet" href="/admin-book/css/user_manage.css">
+    <link rel="stylesheet" href="/css/user_manage.css">
     <style>
         .user-management {
             padding: 20px;

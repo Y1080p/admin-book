@@ -89,7 +89,7 @@ $latestUsers = $pdo->query("SELECT username, email, create_time FROM users ORDER
 <head>
     <meta charset="UTF-8">
     <title>首页 - 图书管理系统</title>
-    <link rel="stylesheet" href="/admin-book/css/user_manage.css">
+    <link rel="stylesheet" href="/css/user_manage.css">
     <style>
         .dashboard {
             padding: 20px;

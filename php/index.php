@@ -26,7 +26,7 @@ $users = $stmt->fetchAll();
 <head>
     <meta charset="UTF-8">
     <title>用户管理 - 后台管理</title>
-    <link rel="stylesheet" href="/admin-book/css/user_manage.css">
+    <link rel="stylesheet" href="/css/user_manage.css">
 </head>
 <body>
     <!-- 左侧导航栏 -->
@@ -103,7 +103,7 @@ $users = $stmt->fetchAll();
                     <td>
                         <div class="status-switch <?php echo $user['status'] ? 'on' : ''; ?>"></div>
                     </td>
-                    <td><img src="<?php echo isset($user['avatar']) ? $user['avatar'] : '/admin-book/images/default_avatar.jpg'; ?>" alt="头像"></td>
+                    <td><img src="<?php echo isset($user['avatar']) ? $user['avatar'] : '/images/default_avatar.jpg'; ?>" alt="头像"></td>
                     <td><?php echo isset($user['gender']) ? $user['gender'] : '未知'; ?></td>
                     <td><?php echo isset($user['intro']) ? $user['intro'] : ''; ?></td>
                     <td><?php echo isset($user['role']) ? $user['role'] : '员工'; ?></td>
