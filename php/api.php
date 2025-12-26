@@ -1,15 +1,30 @@
 <?php
-header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
-
+// 1. 优先处理OPTIONS预请求
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
 }
 
-// 引入数据库连接
+// 2. 安全的CORS配置（仅允许信任域名）
+$allowedOrigins = [
+    'http://localhost:3005', 
+    'http://127.0.0.1:3005',
+    'https://stunning-biscochitos-49d12b.netlify.app' // 你的线上前端域名
+];
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+
+if (in_array($origin, $allowedOrigins)) {
+    header("Access-Control-Allow-Origin: $origin");
+    header('Access-Control-Allow-Credentials: true');
+}
+// 统一允许的方法和头（覆盖核心接口的常用场景）
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
+
+// 3. 统一响应格式
+header('Content-Type: application/json; charset=utf-8');
+
+// 4. 引入数据库连接
 require_once '../SQL Connection/db_connect.php';
 
 // 获取PDO连接
