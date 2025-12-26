@@ -177,9 +177,9 @@ function convertImageUrl($imagePath) {
         return $imagePath;
     }
 
-    // 转换相对路径为完整 URL
+    // 转换相对路径为完整 URL（分别移除 ./ 和 ../）
     $imagePath = ltrim($imagePath, './');
-    $imagePath = ltrim($imagePath, '../');
+    $imagePath = ltrim($imagePath, '.');
 
     return 'https://admin-book-1nbo.onrender.com/' . $imagePath;
 }
