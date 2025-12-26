@@ -166,6 +166,33 @@ switch ($endpoint) {
         break;
 }
 
+// 辅助函数：转换图片路径为线上 URL
+function convertImageUrl($imagePath) {
+    if (empty($imagePath)) {
+        return 'https://admin-book-1nbo.onrender.com/image/book-icon.png';
+    }
+
+    // 如果已经是完整 URL，直接返回
+    if (strpos($imagePath, 'http') === 0) {
+        return $imagePath;
+    }
+
+    // 转换相对路径为完整 URL
+    $imagePath = ltrim($imagePath, './');
+    $imagePath = ltrim($imagePath, '../');
+
+    return 'https://admin-book-1nbo.onrender.com/' . $imagePath;
+}
+
+// 辅助函数：处理图书数据中的图片路径
+function processBookImages(&$books) {
+    foreach ($books as &$book) {
+        if (isset($book['cover_image'])) {
+            $book['cover_image'] = convertImageUrl($book['cover_image']);
+        }
+    }
+}
+
 // 认证相关接口
 function handleAuth($segments) {
     $action = $segments[1] ?? '';
@@ -507,6 +534,9 @@ function getBooks() {
             $book['stock'] = intval($book['stock']);
             $book['category_id'] = intval($book['category_id']);
         }
+
+        // 处理图片路径
+        processBookImages($books);
         
         // 获取总数
         $count_sql = "SELECT COUNT(*) FROM books b WHERE b.status = 1";
@@ -546,6 +576,9 @@ function getNewBooks() {
             $book['stock'] = intval($book['stock']);
             $book['category_id'] = intval($book['category_id']);
         }
+
+        // 处理图片路径
+        processBookImages($books);
         
         echo json_encode($books);
     } catch (Exception $e) {
@@ -598,7 +631,10 @@ function getBestsellers() {
             $book['category_id'] = intval($book['category_id']);
             $book['order_count'] = intval($book['order_count']);
         }
-        
+
+        // 处理图片路径
+        processBookImages($books);
+
         echo json_encode($books);
     } catch (Exception $e) {
         http_response_code(500);
@@ -624,7 +660,12 @@ function getBookDetail($bookId) {
             $book['price'] = floatval($book['price']);
             $book['stock'] = intval($book['stock']);
             $book['category_id'] = intval($book['category_id']);
-            
+
+            // 处理图片路径
+            if (isset($book['cover_image'])) {
+                $book['cover_image'] = convertImageUrl($book['cover_image']);
+            }
+
             echo json_encode([
                 'success' => true,
                 'book' => $book
