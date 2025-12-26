@@ -1,13 +1,38 @@
 <?php
+// 1. 处理OPTIONS预请求（跨域必备）
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
+// 2. 配置信任的跨域域名
+$allowedOrigins = [
+    'http://localhost:3005', 
+    'http://127.0.0.1:3005',
+    'https://stunning-biscochitos-49d12b.netlify.app'
+];
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+
+if (in_array($origin, $allowedOrigins)) {
+    header("Access-Control-Allow-Origin: $origin");
+    header('Access-Control-Allow-Credentials: true');
+    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS'); // 适配图书管理的增删改查
+    header('Access-Control-Allow-Headers: Content-Type');
+}
+
+// 3. 设置响应格式（图书管理接口通常返回JSON）
+header('Content-Type: application/json; charset=utf-8');
+
+// 4. 原有session启动逻辑（移到CORS之后）
 session_start();
 
-// 检查用户是否登录
+// 5. 原有登录检查逻辑（保留）
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit();
 }
 
-// 引入数据库连接函数
+// 6. 原有数据库连接逻辑（保留）
 require_once '../SQL Connection/db_connect.php';
 
 // 查询图书数据（支持搜索功能）
