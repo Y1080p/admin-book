@@ -1,22 +1,29 @@
 <?php
-// 搜索用户和群聊的API文件
-$allowedOrigins = ['http://localhost:3005', 'http://127.0.0.1:3005'];
-$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-if (in_array($origin, $allowedOrigins)) {
-    header("Access-Control-Allow-Origin: $origin");
-    header('Access-Control-Allow-Credentials: true');
-}
-header('Access-Control-Allow-Methods: GET, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-header('Content-Type: application/json; charset=utf-8');
-
+// 1. 优先处理OPTIONS预请求（只保留1处，避免重复）
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
 }
 
-require_once '../../client-book/SQL Connection/db_connect.php';
+// 2. 配置允许的跨域域名（添加你的线上前端域名）
+$allowedOrigins = [
+    'http://localhost:3005', 
+    'http://127.0.0.1:3005',
+    'https://stunning-biscochitos-49d12b.netlify.app' // 你的线上前端域名
+];
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
-// 配置 session
+// 3. 仅给允许的域名返回CORS头（避免非信任域名访问）
+if (in_array($origin, $allowedOrigins)) {
+    header("Access-Control-Allow-Origin: $origin");
+    header('Access-Control-Allow-Credentials: true');
+    header('Access-Control-Allow-Methods: GET, OPTIONS'); // 允许的请求方法
+    header('Access-Control-Allow-Headers: Content-Type, Authorization'); // 允许的请求头
+}
+
+// 4. 统一设置响应格式
+header('Content-Type: application/json; charset=utf-8');
+
+// 5. 配置session（原有逻辑保留）
 session_set_cookie_params([
     'lifetime' => 86400,
     'path' => '/',
@@ -25,6 +32,10 @@ session_set_cookie_params([
     'httponly' => true,
     'samesite' => 'lax'
 ]);
+
+// 6. 引入数据库连接（原有逻辑保留）
+require_once '../../client-book/SQL Connection/db_connect.php';
+
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
