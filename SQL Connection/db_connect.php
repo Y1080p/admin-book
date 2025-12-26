@@ -1,13 +1,13 @@
 <?php
-// 数据库配置函数：获取PDO连接对象
+// 数据库配置函数：获取PDO连接对象（适配Render环境变量，兼容Railway MySQL）
 function getPDOConnection() {
-    // 数据库配置（适配Railway MySQL公网连接）
-    $host = 'yamabiko.proxy.rlwy.net';       // Railway MySQL主机地址
-    $dbname = 'railway';                     // Railway默认数据库名
-    $username = 'root';                      // 数据库用户名
-    $password = 'uHBiTFwnSNhpYwfbtGxCLwTMmeRljpri'; // 数据库密码
-    $port = '51207';                         // Railway非默认端口（必须指定，否则连接失败）
-    $charset = 'utf8mb4';                    // 升级为utf8mb4，支持emoji等特殊字符（比utf8更全面）
+    // 从Render环境变量中读取数据库配置（无需写死，灵活适配部署环境）
+    $host = getenv('DB_HOST');       // 读取环境变量：Railway MySQL主机地址
+    $dbname = getenv('DB_NAME');     // 读取环境变量：Railway默认数据库名
+    $username = getenv('DB_USER');   // 读取环境变量：数据库用户名
+    $password = getenv('DB_PASS');   // 读取环境变量：数据库密码
+    $port = getenv('DB_PORT');       // 读取环境变量：Railway非默认端口（必须指定，否则连接失败）
+    $charset = 'utf8mb4';            // 升级为utf8mb4，支持emoji等特殊字符（比utf8更全面）
 
     try {
         // 建立PDO连接：关键添加 port=$port 参数，指定非默认端口
