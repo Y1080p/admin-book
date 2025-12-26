@@ -13,6 +13,11 @@ Require all granted
 # 静态文件直接访问
 RewriteRule \.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ - [L]
 
+# API 路由：/api/* -> api.php?path=*
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^api/(.*)$ api.php?path=$1 [L,QSA]
+
 # 如果请求的不是真实文件或目录，重写到index.php
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
