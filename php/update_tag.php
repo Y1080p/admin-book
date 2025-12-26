@@ -1,9 +1,31 @@
 <?php
+// 1. 优先处理OPTIONS预请求
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
+// 2. 配置允许的跨域域名
+$allowedOrigins = [
+    'http://localhost:3005', 
+    'http://127.0.0.1:3005',
+    'https://stunning-biscochitos-49d12b.netlify.app'
+];
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+
+if (in_array($origin, $allowedOrigins)) {
+    header("Access-Control-Allow-Origin: $origin");
+    header('Access-Control-Allow-Credentials: true');
+    header('Access-Control-Allow-Methods: POST, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type');
+}
+header('Content-Type: application/json; charset=utf-8');
+
+// 3. 启动session
 session_start();
 
-// 检查用户是否登录
+// 4. 检查用户是否登录
 if (!isset($_SESSION['user_id'])) {
-    header('Content-Type: application/json');
     echo json_encode(['success' => false, 'message' => '请先登录']);
     exit();
 }

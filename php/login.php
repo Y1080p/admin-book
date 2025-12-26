@@ -13,26 +13,34 @@ $allowedOrigins = [
 ];
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
+// 3. 检测是否为API请求（通过请求头或特定参数）
+$isApiRequest = false;
 if (in_array($origin, $allowedOrigins)) {
+    $isApiRequest = true;
     header("Access-Control-Allow-Origin: $origin");
     header('Access-Control-Allow-Credentials: true');
-    header('Access-Control-Allow-Methods: POST, OPTIONS');
+    header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
     header('Access-Control-Allow-Headers: Content-Type');
+    header('Content-Type: application/json; charset=utf-8');
 }
 
-// 3. 设置响应格式（登录接口返回JSON）
-header('Content-Type: application/json; charset=utf-8');
-
-// 4. 原有session启动逻辑（移到CORS之后）
+// 4. 启动session
 session_start();
 
-// 5. 原有“已登录跳转”逻辑（保留）
+// 5. 检查是否已登录
 if (isset($_SESSION['user_id'])) {
-    header('Location: home.php');
-    exit();
+    if ($isApiRequest) {
+        // API请求：返回JSON
+        echo json_encode(['success' => false, 'message' => '用户已登录']);
+        exit();
+    } else {
+        // 普通网页请求：重定向
+        header('Location: home.php');
+        exit();
+    }
 }
 
-// 6. 原有数据库连接逻辑（保留）
+// 6. 数据库连接
 require_once '../SQL Connection/db_connect.php';
 
 $error = '';
@@ -57,29 +65,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // 检查角色权限
                 if ($user['role'] === '用户') {
                     $error = '该账号无权限登录后台系统！';
+                    if ($isApiRequest) {
+                        echo json_encode(['success' => false, 'message' => $error]);
+                        exit();
+                    }
                 } else {
                     // 登录成功，设置session
                     $_SESSION['user_id'] = $user['id'];
                     $_SESSION['username'] = $user['username'];
                     $_SESSION['role'] = $user['role'];
                     
-                    header('Location: home.php');
-                    exit();
+                    if ($isApiRequest) {
+                        // API请求：返回JSON
+                        echo json_encode([
+                            'success' => true, 
+                            'message' => '登录成功',
+                            'user' => [
+                                'id' => $user['id'],
+                                'username' => $user['username'],
+                                'role' => $user['role']
+                            ]
+                        ]);
+                        exit();
+                    } else {
+                        // 普通请求：重定向
+                        header('Location: home.php');
+                        exit();
+                    }
                 }
             } else {
-                // 密码错误，根据角色显示不同提示
-                if ($user['role'] === '用户') {
-                    $error = '该账号无权限登录后台系统！';
-                } else {
-                    $error = '账号或密码错误！';
+                // 密码错误
+                $error = '账号或密码错误！';
+                if ($isApiRequest) {
+                    echo json_encode(['success' => false, 'message' => $error]);
+                    exit();
                 }
             }
         } else {
-            // 用户不存在或状态异常
+            // 用户不存在
             $error = '账号或密码错误！';
+            if ($isApiRequest) {
+                echo json_encode(['success' => false, 'message' => $error]);
+                exit();
+            }
         }
     } else {
         $error = '请输入用户名和密码！';
+        if ($isApiRequest) {
+            echo json_encode(['success' => false, 'message' => $error]);
+            exit();
+        }
     }
 }
 ?>

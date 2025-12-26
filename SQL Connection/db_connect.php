@@ -7,6 +7,16 @@ function getPDOConnection() {
     $username = getenv('DB_USER');   // 读取环境变量：数据库用户名
     $password = getenv('DB_PASS');   // 读取环境变量：数据库密码
     $port = getenv('DB_PORT');       // 读取环境变量：Railway非默认端口（必须指定，否则连接失败）
+
+    // 如果环境变量为空，使用本地开发环境配置
+    if (empty($host) || empty($dbname) || empty($username) || empty($password)) {
+        $host = '127.0.0.1';        // 本地MySQL主机
+        $dbname = 'book_db';          // 本地数据库名
+        $username = 'root';          // 本地数据库用户名
+        $password = 'root';          // 本地数据库密码（根据phpstudy配置调整）
+        $port = '3306';             // MySQL默认端口
+    }
+
     $charset = 'utf8mb4';            // 升级为utf8mb4，支持emoji等特殊字符（比utf8更全面）
 
     try {
@@ -29,7 +39,7 @@ function getPDOConnection() {
     } catch (PDOException $e) {
         // 连接失败：记录错误信息（便于排查），并终止程序
         error_log("数据库连接失败：" . $e->getMessage()); // 写入错误日志
-        die("数据库连接异常，请稍后重试！"); // 给用户友好提示，不暴露敏感信息
+        die("数据库连接异常，请稍后重试！错误信息：" . $e->getMessage()); // 给用户友好提示，显示具体错误
     }
 }
 ?>

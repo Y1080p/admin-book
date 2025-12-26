@@ -13,26 +13,32 @@ $allowedOrigins = [
 ];
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
-if (in_array($origin, $allowedOrigins)) {
+// 3. 检测是否为API请求
+$isApiRequest = in_array($origin, $allowedOrigins);
+
+if ($isApiRequest) {
     header("Access-Control-Allow-Origin: $origin");
     header('Access-Control-Allow-Credentials: true');
     header('Access-Control-Allow-Methods: GET, OPTIONS');
     header('Access-Control-Allow-Headers: Content-Type');
+    header('Content-Type: application/json; charset=utf-8');
 }
 
-// 3. 设置响应格式（首页接口通常返回JSON/HTML，这里保持原有逻辑）
-header('Content-Type: application/json; charset=utf-8');
-
-// 4. 原有session启动逻辑（移到CORS之后）
+// 4. 启动session
 session_start();
 
-// 5. 原有登录检查逻辑（保留）
+// 5. 检查登录状态
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
-    exit();
+    if ($isApiRequest) {
+        echo json_encode(['success' => false, 'message' => '未登录']);
+        exit();
+    } else {
+        header('Location: login.php');
+        exit();
+    }
 }
 
-// 6. 原有数据库连接+数据获取逻辑（保留）
+// 6. 数据库连接
 require_once '../SQL Connection/db_connect.php';
 $pdo = getPDOConnection();
 
@@ -48,10 +54,23 @@ $categoryCount = $pdo->query("SELECT COUNT(*) FROM categories")->fetchColumn();
 // 群聊数量
 $chatGroupCount = $pdo->query("SELECT COUNT(*) FROM chat_groups")->fetchColumn();
 
-// 最新图书
+// 如果是API请求，返回JSON数据
+if ($isApiRequest) {
+    echo json_encode([
+        'success' => true,
+        'data' => [
+            'userCount' => $userCount,
+            'bookCount' => $bookCount,
+            'categoryCount' => $categoryCount,
+            'chatGroupCount' => $chatGroupCount
+        ]
+    ]);
+    exit();
+}
+
+// 获取HTML页面所需的数据
 $latestBooks = $pdo->query("SELECT title, author, create_time FROM books ORDER BY create_time DESC LIMIT 5")->fetchAll();
 
-// 最新评论
 $latestComments = $pdo->query("SELECT c.content, u.username, b.title, c.create_time 
                                 FROM comments c 
                                 LEFT JOIN users u ON c.user_id = u.id 
@@ -59,16 +78,9 @@ $latestComments = $pdo->query("SELECT c.content, u.username, b.title, c.create_t
                                 ORDER BY c.create_time DESC LIMIT 5")->fetchAll();
 
 // 用户管理汇总数据
-// 今日新增用户
 $todayUsers = $pdo->query("SELECT COUNT(*) FROM users WHERE DATE(create_time) = CURDATE()")->fetchColumn();
-
-// 本周新增用户
 $weekUsers = $pdo->query("SELECT COUNT(*) FROM users WHERE YEARWEEK(create_time) = YEARWEEK(NOW())")->fetchColumn();
-
-// 本月新增用户
 $monthUsers = $pdo->query("SELECT COUNT(*) FROM users WHERE YEAR(create_time) = YEAR(NOW()) AND MONTH(create_time) = MONTH(NOW())")->fetchColumn();
-
-// 最新注册用户
 $latestUsers = $pdo->query("SELECT username, email, create_time FROM users ORDER BY create_time DESC LIMIT 5")->fetchAll();
 ?>
 

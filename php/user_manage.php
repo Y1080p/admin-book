@@ -22,26 +22,43 @@ if (in_array($origin, $allowedOrigins)) {
     header('Access-Control-Allow-Headers: Content-Type');
 }
 
-// 4. 设置统一响应格式（用户管理接口通常返回JSON）
-header('Content-Type: application/json; charset=utf-8');
+// 4. 检测是否为API请求
+$isApiRequest = in_array($origin, $allowedOrigins);
 
-// 5. 原有session逻辑（必须移到CORS之后，避免header报错）
-session_start();
-
-// 6. 原有登录检查逻辑（完全保留）
-if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
-    exit();
+if ($isApiRequest) {
+    header('Content-Type: application/json; charset=utf-8');
 }
 
-// 7. 原有权限检查逻辑（完全保留）
+// 5. 启动session
+session_start();
+
+// 6. 登录检查
+if (!isset($_SESSION['user_id'])) {
+    if ($isApiRequest) {
+        echo json_encode(['success' => false, 'message' => '未登录']);
+        exit();
+    } else {
+        header('Location: login.php');
+        exit();
+    }
+}
+
+// 7. 权限检查
 if ($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== '员工') {
-    header('Location: home.php');
-    exit();
+    if ($isApiRequest) {
+        echo json_encode(['success' => false, 'message' => '权限不足']);
+        exit();
+    } else {
+        header('Location: home.php');
+        exit();
+    }
 }
 
 // 8. 原有数据库连接逻辑（完全保留）
 require_once '../SQL Connection/db_connect.php';
+
+// 初始化数据库连接
+$pdo = getPDOConnection();
 
 // 处理用户操作
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

@@ -13,24 +13,23 @@ $allowedOrigins = [
 ];
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
-if (in_array($origin, $allowedOrigins)) {
+// 3. 检测是否为API请求
+$isApiRequest = in_array($origin, $allowedOrigins);
+
+if ($isApiRequest) {
     header("Access-Control-Allow-Origin: $origin");
     header('Access-Control-Allow-Credentials: true');
-    header('Access-Control-Allow-Methods: GET, OPTIONS'); // 登出通常用GET
+    header('Access-Control-Allow-Methods: GET, OPTIONS');
     header('Access-Control-Allow-Headers: Content-Type');
+    header('Content-Type: application/json; charset=utf-8');
 }
 
-// 3. 设置响应格式（可选，登出后跳转可保留）
-header('Content-Type: text/html; charset=utf-8');
-
-// 4. 原有session逻辑（移到CORS之后）
+// 4. 启动session
 session_start();
 
 // 5. 原有登出业务逻辑（保留）
-// 清除所有session设置
 $_SESSION = array();
 
-// 删除session cookie
 if (ini_get("session.use_cookies")) {
     $params = session_get_cookie_params();
     setcookie(session_name(), '', time() - 42000,
@@ -39,10 +38,13 @@ if (ini_get("session.use_cookies")) {
     );
 }
 
-// 销毁session
 session_destroy();
 
-// 重定向到登录页面
-header('Location: login.php');
+// 根据请求类型返回不同的响应
+if ($isApiRequest) {
+    echo json_encode(['success' => true, 'message' => '登出成功']);
+} else {
+    header('Location: login.php');
+}
 exit();
 ?>

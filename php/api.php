@@ -16,10 +16,9 @@ $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 if (in_array($origin, $allowedOrigins)) {
     header("Access-Control-Allow-Origin: $origin");
     header('Access-Control-Allow-Credentials: true');
+    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization');
 }
-// 统一允许的方法和头（覆盖核心接口的常用场景）
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 // 3. 统一响应格式
 header('Content-Type: application/json; charset=utf-8');
@@ -46,11 +45,30 @@ function sendResponse($success, $data = null, $message = '', $code = 200) {
     exit();
 }
 
-// 获取所有图书
-if ($method === 'GET' && $action === 'get_books') {
+// 检查登录状态
+if ($method === 'GET' && $action === 'auth/check') {
+    session_start();
+    if (isset($_SESSION['user_id'])) {
+        sendResponse(true, [
+            'user_id' => $_SESSION['user_id'],
+            'username' => $_SESSION['username'],
+            'role' => $_SESSION['role']
+        ], '用户已登录');
+    } else {
+        sendResponse(false, null, '用户未登录', 401);
+    }
+}
+
+// 获取所有图书（兼容前端books/list接口）
+if (($method === 'GET' && $action === 'get_books') || ($method === 'GET' && $action === 'books/list')) {
     try {
         $search = isset($_GET['search']) ? $_GET['search'] : '';
         $category = isset($_GET['category']) ? $_GET['category'] : '';
+        $category_id = isset($_GET['category_id']) ? $_GET['category_id'] : '';
+        $title = isset($_GET['title']) ? $_GET['title'] : '';
+        $author = isset($_GET['author']) ? $_GET['author'] : '';
+        $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+        $pageSize = isset($_GET['page_size']) ? intval($_GET['page_size']) : 10;
         
         $sql = "SELECT * FROM books WHERE 1=1";
         $params = [];
@@ -65,13 +83,47 @@ if ($method === 'GET' && $action === 'get_books') {
             $params[':category'] = $category;
         }
         
-        $sql .= " ORDER BY created_at DESC";
+        if (!empty($category_id)) {
+            $sql .= " AND category = :category_id";
+            $params[':category_id'] = $category_id;
+        }
+        
+        if (!empty($title)) {
+            $sql .= " AND title LIKE :title";
+            $params[':title'] = "%$title%";
+        }
+        
+        if (!empty($author)) {
+            $sql .= " AND author LIKE :author";
+            $params[':author'] = "%$author%";
+        }
+        
+        // 获取总数
+        $countSql = str_replace("SELECT *", "SELECT COUNT(*) as total", $sql);
+        $countStmt = $pdo->prepare($countSql);
+        $countStmt->execute($params);
+        $total = $countStmt->fetch()['total'];
+        
+        // 添加分页
+        $offset = ($page - 1) * $pageSize;
+        $sql .= " ORDER BY created_at DESC LIMIT :offset, :pageSize";
         
         $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->bindValue(':pageSize', $pageSize, PDO::PARAM_INT);
+        $stmt->execute();
         $books = $stmt->fetchAll();
         
-        sendResponse(true, $books, '获取图书列表成功');
+        sendResponse(true, [
+            'books' => $books,
+            'total' => $total,
+            'page' => $page,
+            'page_size' => $pageSize,
+            'total_pages' => ceil($total / $pageSize)
+        ], '获取图书列表成功');
         
     } catch (PDOException $e) {
         sendResponse(false, null, '获取图书列表失败: ' . $e->getMessage(), 500);
@@ -112,14 +164,20 @@ if ($method === 'GET' && $action === 'get_stats') {
     }
 }
 
-// 获取所有分类
-if ($method === 'GET' && $action === 'get_categories') {
+// 获取所有分类（兼容前端categories接口）
+if (($method === 'GET' && $action === 'get_categories') || ($method === 'GET' && $action === 'categories')) {
     try {
-        $stmt = $pdo->query("SELECT DISTINCT category FROM books ORDER BY category");
-        $categories = $stmt->fetchAll(PDO::FETCH_COLUMN);
-        
-        sendResponse(true, $categories, '获取分类列表成功');
-        
+        // 尝试从categories表获取
+        try {
+            $stmt = $pdo->query("SELECT * FROM categories ORDER BY create_time DESC");
+            $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            sendResponse(true, $categories, '获取分类列表成功');
+        } catch (PDOException $e) {
+            // 如果categories表不存在，从books表获取
+            $stmt = $pdo->query("SELECT DISTINCT category FROM books ORDER BY category");
+            $categories = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            sendResponse(true, $categories, '获取分类列表成功');
+        }
     } catch (PDOException $e) {
         sendResponse(false, null, '获取分类列表失败: ' . $e->getMessage(), 500);
     }

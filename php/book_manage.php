@@ -20,16 +20,25 @@ if (in_array($origin, $allowedOrigins)) {
     header('Access-Control-Allow-Headers: Content-Type');
 }
 
-// 3. 设置响应格式（图书管理接口通常返回JSON）
-header('Content-Type: application/json; charset=utf-8');
+// 3. 检测是否为API请求
+$isApiRequest = in_array($origin, $allowedOrigins);
 
-// 4. 原有session启动逻辑（移到CORS之后）
+if ($isApiRequest) {
+    header('Content-Type: application/json; charset=utf-8');
+}
+
+// 4. 启动session
 session_start();
 
-// 5. 原有登录检查逻辑（保留）
+// 5. 登录检查
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
-    exit();
+    if ($isApiRequest) {
+        echo json_encode(['success' => false, 'message' => '未登录']);
+        exit();
+    } else {
+        header('Location: login.php');
+        exit();
+    }
 }
 
 // 6. 原有数据库连接逻辑（保留）

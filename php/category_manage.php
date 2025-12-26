@@ -22,16 +22,25 @@ if (in_array($origin, $allowedOrigins)) {
     header('Access-Control-Allow-Headers: Content-Type');
 }
 
-// 4. 设置统一响应格式（适配JSON返回）
-header('Content-Type: application/json; charset=utf-8');
+// 4. 检测是否为API请求
+$isApiRequest = in_array($origin, $allowedOrigins);
 
-// 5. 原有session逻辑（移到CORS之后，避免报错）
+if ($isApiRequest) {
+    header('Content-Type: application/json; charset=utf-8');
+}
+
+// 5. 启动session
 session_start();
 
-// 6. 原有登录检查逻辑（完全保留）
+// 6. 登录检查
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
-    exit();
+    if ($isApiRequest) {
+        echo json_encode(['success' => false, 'message' => '未登录']);
+        exit();
+    } else {
+        header('Location: login.php');
+        exit();
+    }
 }
 
 // 7. 原有数据库连接逻辑（完全保留）
