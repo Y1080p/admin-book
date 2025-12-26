@@ -1,13 +1,40 @@
 <?php
+// 1. 优先处理OPTIONS预请求（跨域必加，避免浏览器拦截）
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
+// 2. 配置信任的跨域域名（本地开发+线上前端）
+$allowedOrigins = [
+    'http://localhost:3005', 
+    'http://127.0.0.1:3005',
+    'https://stunning-biscochitos-49d12b.netlify.app' // 替换成你的线上前端域名
+];
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+
+// 3. 仅给信任域名返回CORS头（安全，避免任意域名访问）
+if (in_array($origin, $allowedOrigins)) {
+    header("Access-Control-Allow-Origin: $origin");
+    header('Access-Control-Allow-Credentials: true');
+    // 群聊管理涉及增删改查，允许所有常用请求方法
+    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type');
+}
+
+// 4. 设置统一响应格式（适配JSON/HTML返回）
+header('Content-Type: text/html; charset=utf-8');
+
+// 5. 原有session逻辑（必须移到CORS之后，避免header报错）
 session_start();
 
-// 检查用户是否登录
+// 6. 原有登录检查逻辑（完全保留）
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit();
 }
 
-// 检查用户权限（管理员和员工可以访问群聊管理）
+// 7. 原有权限检查逻辑（完全保留，403提示不变）
 if ($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== '员工') {
     http_response_code(403);
     echo "<h1>403 Forbidden</h1>";
@@ -16,7 +43,7 @@ if ($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== '员工') {
     exit();
 }
 
-// 引入数据库连接函数
+// 8. 原有数据库连接逻辑（完全保留）
 require_once '../SQL Connection/db_connect.php';
 
 $pdo = getPDOConnection();
