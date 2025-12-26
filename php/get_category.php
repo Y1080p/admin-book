@@ -1,4 +1,13 @@
 <?php
+// 第一步：添加CORS跨域头（放在最开头）
+header("Access-Control-Allow-Origin: https://stunning-biscochitos-49d12b.netlify.app");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Credentials: true");
+// 处理OPTIONS预请求
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    exit();
+}
 session_start();
 
 // 检查用户是否登录
