@@ -1,13 +1,40 @@
 <?php
+// 1. 优先处理OPTIONS预请求（解决跨域预请求拦截）
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
+// 2. 配置信任的跨域域名（包含本地开发和线上前端）
+$allowedOrigins = [
+    'http://localhost:3005', 
+    'http://127.0.0.1:3005',
+    'https://stunning-biscochitos-49d12b.netlify.app' // 你的线上前端域名
+];
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+
+// 3. 仅给信任域名返回CORS头（安全规范）
+if (in_array($origin, $allowedOrigins)) {
+    header("Access-Control-Allow-Origin: $origin");
+    header('Access-Control-Allow-Credentials: true');
+    // 图书管理接口涉及增删改查，允许所有常用请求方法
+    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type');
+}
+
+// 4. 设置统一响应格式（适配JSON返回）
+header('Content-Type: application/json; charset=utf-8');
+
+// 5. 原有session逻辑（移到CORS之后，避免报错）
 session_start();
 
-// 检查用户是否登录
+// 6. 原有登录检查逻辑（完全保留）
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit();
 }
 
-// 引入数据库连接函数
+// 7. 原有数据库连接逻辑（完全保留）
 require_once '../SQL Connection/db_connect.php';
 
 // 查询分类数据（支持搜索功能）
