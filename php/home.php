@@ -1,16 +1,39 @@
 <?php
+// 1. 处理OPTIONS预请求
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
+// 2. 配置跨域域名（信任本地+线上前端）
+$allowedOrigins = [
+    'http://localhost:3005', 
+    'http://127.0.0.1:3005',
+    'https://stunning-biscochitos-49d12b.netlify.app'
+];
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+
+if (in_array($origin, $allowedOrigins)) {
+    header("Access-Control-Allow-Origin: $origin");
+    header('Access-Control-Allow-Credentials: true');
+    header('Access-Control-Allow-Methods: GET, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type');
+}
+
+// 3. 设置响应格式（首页接口通常返回JSON/HTML，这里保持原有逻辑）
+header('Content-Type: application/json; charset=utf-8');
+
+// 4. 原有session启动逻辑（移到CORS之后）
 session_start();
 
-// 检查用户是否登录
+// 5. 原有登录检查逻辑（保留）
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit();
 }
 
-// 引入数据库连接函数
+// 6. 原有数据库连接+数据获取逻辑（保留）
 require_once '../SQL Connection/db_connect.php';
-
-// 获取统计数据
 $pdo = getPDOConnection();
 
 // 用户数量
