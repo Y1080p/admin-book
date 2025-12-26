@@ -37,9 +37,9 @@ function getPDOConnection() {
         // 连接成功，返回PDO对象
         return $pdo;
     } catch (PDOException $e) {
-        // 连接失败：记录错误信息（便于排查），并终止程序
-        error_log("数据库连接失败：" . $e->getMessage()); // 写入错误日志
-        die("数据库连接异常，请稍后重试！错误信息：" . $e->getMessage()); // 给用户友好提示，显示具体错误
+        // 连接失败：记录错误信息，但不要 die()，让调用者处理
+        error_log("数据库连接失败：" . $e->getMessage());
+        throw new Exception("数据库连接失败：" . $e->getMessage());
     }
 }
 ?>

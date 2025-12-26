@@ -49,16 +49,25 @@ $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = isset($_POST['username']) ? $_POST['username'] : '';
     $password = isset($_POST['password']) ? $_POST['password'] : '';
-    
+
     if (!empty($username) && !empty($password)) {
-        $pdo = getPDOConnection();
-        
-        // 先检查用户是否存在
-        $sql = "SELECT id, username, role, password FROM users WHERE username = ? AND status = 1";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([$username]);
-        $user = $stmt->fetch();
-        
+        $user = null;
+        try {
+            $pdo = getPDOConnection();
+
+            // 先检查用户是否存在
+            $sql = "SELECT id, username, role, password FROM users WHERE username = ? AND status = 1";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([$username]);
+            $user = $stmt->fetch();
+        } catch (Exception $e) {
+            $error = '数据库连接失败，请联系管理员！';
+            if ($isApiRequest) {
+                echo json_encode(['success' => false, 'message' => $error]);
+                exit();
+            }
+        }
+
         if ($user) {
             // 检查密码是否正确
             if ($user['password'] === $password) {
@@ -74,11 +83,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_SESSION['user_id'] = $user['id'];
                     $_SESSION['username'] = $user['username'];
                     $_SESSION['role'] = $user['role'];
-                    
+
                     if ($isApiRequest) {
                         // API请求：返回JSON
                         echo json_encode([
-                            'success' => true, 
+                            'success' => true,
                             'message' => '登录成功',
                             'user' => [
                                 'id' => $user['id'],
@@ -102,8 +111,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
         } else {
-            // 用户不存在
-            $error = '账号或密码错误！';
+            // 用户不存在或数据库连接失败
+            if (empty($error)) {
+                $error = '账号或密码错误！';
+            }
             if ($isApiRequest) {
                 echo json_encode(['success' => false, 'message' => $error]);
                 exit();
