@@ -1,0 +1,8 @@
+// 手动删除第21-24行（通配符else块和重复CORS头）
+// 第21-24行需要删除
+
+// 正确的CORS配置应该是：
+// if (in_array($origin, $allowedOrigins)) {
+//     header("Access-Control-Allow-Origin: $origin");
+//     header('Access-Control-Allow-Credentials: true');
+// }

@@ -9,21 +9,33 @@ $allowedOrigins = [
     'http://localhost:3005',
     'http://localhost:3007',
     'http://localhost:3000',
-    'https://stunning-biscochitos-49d12b.netlify.app'
+    'http://127.0.0.1:3007',
+    'https://stunning-biscochitos-49d12b.netlify.app',
+    'https://client-book-vue.onrender.com'
 ];
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
 if (in_array($origin, $allowedOrigins)) {
     header("Access-Control-Allow-Origin: $origin");
     header('Access-Control-Allow-Credentials: true');
+    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization');
+    header('Access-Control-Max-Age: 3600');
+    error_log("CORS headers set for origin: " . $origin);
 } else {
-    header('Access-Control-Allow-Origin: *');
+    error_log("WARNING: Origin NOT in whitelist: " . $origin);
+    error_log("Allowed origins: " . implode(', ', $allowedOrigins));
 }
-header('Access-Control-Allow-Credentials: true');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-header('Access-Control-Max-Age: 3600');
+
 header('Content-Type: application/json; charset=utf-8');
+
+// 输出响应头用于调试
+error_log("Response headers:");
+error_log("  Content-Type: application/json; charset=utf-8");
+if (in_array($origin, $allowedOrigins)) {
+    error_log("  Access-Control-Allow-Origin: $origin");
+    error_log("  Access-Control-Allow-Credentials: true");
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
@@ -31,18 +43,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require_once 'SQL Connection/db_connect.php';
 
-// 配置 session
-$isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443;
+// 配置 session - 与debug_session.php保持一致
+error_log("=== API.PHP SESSION START ===");
+
+// 使用固定的session.save_path
+ini_set('session.save_path', 'E:\phpstudy_pro\Extensions\tmp\tmp');
+error_log("Session save path set to: E:\phpstudy_pro\Extensions\tmp\tmp");
+
+// 不设置cookie_domain，让它使用默认值（localhost场景最重要）
 session_set_cookie_params([
     'lifetime' => 86400, // 24小时
     'path' => '/',
-    'domain' => '', // 空字符串表示当前域名
-    'secure' => $isHttps,
+    'domain' => '', // 空字符串最重要！localhost需要这样
+    'secure' => false, // 开发环境不需要HTTPS
     'httponly' => true,
-    'samesite' => 'lax'
+    'samesite' => '' // 空字符串允许fetch请求发送cookie
 ]);
 
+// 开启session前先设置
 session_start();
+
+error_log("Session ID after start: " . session_id());
+error_log("SESSION CONFIG END ==========");
+
+// 调试：记录session状态
+error_log("=== DEBUG: Session Info ===");
+error_log("SESSION ID: " . session_id());
+error_log("SESSION DATA: " . json_encode($_SESSION));
+error_log("Cookie: " . json_encode($_COOKIE));
+error_log("========================");
 
 // 路由处理 - 健壮版本
 $request_uri = $_SERVER['REQUEST_URI'];
@@ -353,15 +382,24 @@ function handleWishlist($segments) {
 
 // 检查登录状态
 function checkLoginStatus() {
+    error_log("=== CHECK LOGIN STATUS DEBUG ===");
+    error_log("SESSION ID: " . session_id());
+    error_log("SESSION data: " . json_encode($_SESSION));
+    error_log("Cookies: " . json_encode($_COOKIE));
+
     if (isset($_SESSION['user_id'])) {
-        echo json_encode([
+        $result = [
             'success' => true,
             'id' => $_SESSION['user_id'],
             'username' => $_SESSION['username']
-        ]);
+        ];
+        echo json_encode($result);
+        error_log("User is logged in: " . json_encode($result));
     } else {
+        error_log("User is NOT logged in");
         echo json_encode(['success' => false]);
     }
+    error_log("=============================");
 }
 
 // 用户登录
@@ -371,11 +409,17 @@ function login() {
         echo json_encode(['error' => 'Method not allowed']);
         return;
     }
-    
+
+    error_log("=== LOGIN DEBUG ===");
+    error_log("Raw input: " . file_get_contents('php://input'));
+
     $input = json_decode(file_get_contents('php://input'), true);
     $username = $input['username'] ?? '';
     $password = $input['password'] ?? '';
-    
+
+    error_log("Username: " . $username);
+    error_log("Password provided: " . (empty($password) ? 'NO' : 'YES'));
+
     if (empty($username) || empty($password)) {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => '用户名和密码不能为空']);
@@ -401,7 +445,13 @@ function login() {
         if ($user && $passwordMatch) {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
-            
+
+            error_log("Login SUCCESS!");
+            error_log("User ID: " . $user['id']);
+            error_log("Username: " . $user['username']);
+            error_log("Session ID after login: " . session_id());
+            error_log("Session data: " . json_encode($_SESSION));
+
             // 更新用户在线状态为在线
             try {
                 $updateStmt = $pdo->prepare("UPDATE users SET online_status = 'online', login_time = NOW(), last_active_time = NOW() WHERE id = ?");
@@ -409,9 +459,19 @@ function login() {
             } catch (Exception $e) {
                 error_log("Failed to update user online status on login: " . $e->getMessage());
             }
-            
-            echo json_encode(['success' => true, 'message' => '登录成功']);
+
+            // 返回用户信息，避免需要额外请求checkLoginStatus
+            echo json_encode([
+                'success' => true,
+                'message' => '登录成功',
+                'user' => [
+                    'id' => $user['id'],
+                    'username' => $user['username'],
+                    'email' => $user['email']
+                ]
+            ]);
         } else {
+            error_log("Login FAILED: User not found or password mismatch");
             echo json_encode(['success' => false, 'message' => '用户名或密码错误']);
         }
     } catch (Exception $e) {
@@ -3537,13 +3597,20 @@ function disbandGroup() {
 
 // 处理用户设置
 function handleUserSettings() {
+    error_log("=== HANDLE USER SETTINGS DEBUG ===");
+    error_log("SESSION data: " . json_encode($_SESSION));
+    error_log("SESSION ID: " . session_id());
+    error_log("Cookies: " . json_encode($_COOKIE));
+
     if (!isset($_SESSION['user_id'])) {
         http_response_code(401);
         echo json_encode(['error' => '未登录']);
+        error_log("User not logged in - returning 401");
         return;
     }
-    
+
     $userId = $_SESSION['user_id'];
+    error_log("User ID from session: " . $userId);
     
     try {
         $pdo = getPDOConnection();

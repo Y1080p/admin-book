@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Session Cookie Debug</title>
+</head>
+<body>
+    <h1>Session Cookie Debug Tool</h1>
+    
+    <div style="margin: 20px; padding: 10px; border: 1px solid #ccc;">
+        <h3>1. Current Cookies (document.cookie)</h3>
+        <pre id="currentCookies"></pre>
+        <button onclick="refreshCookies()">Refresh Cookies</button>
+    </div>
+    
+    <div style="margin: 20px; padding: 10px; border: 1px solid #ccc;">
+        <h3>2. POST Test (Set Session)</h3>
+        <button onclick="testPost()">Run POST Request</button>
+        <pre id="postResult"></pre>
+        <h4>Response Headers:</h4>
+        <pre id="postHeaders"></pre>
+    </div>
+    
+    <div style="margin: 20px; padding: 10px; border: 1px solid #ccc;">
+        <h3>3. GET Test (Get Session)</h3>
+        <button onclick="testGet()">Run GET Request</button>
+        <pre id="getResult"></pre>
+    </div>
+    
+    <div style="margin: 20px; padding: 10px; border: 1px solid #ccc;">
+        <h3>4. Clear Cookies</h3>
+        <button onclick="clearCookies()">Clear All Cookies</button>
+        <pre id="clearResult"></pre>
+    </div>
+
+    <script>
+        function refreshCookies() {
+            document.getElementById('currentCookies').textContent = document.cookie || 'No cookies found';
+        }
+        
+        async function testPost() {
+            try {
+                const response = await fetch('http://localhost/admin-book/test_session_api.php', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                document.getElementById('postResult').textContent = JSON.stringify(data, null, 2);
+                
+                // Get response headers
+                let headersText = '';
+                response.headers.forEach((value, name) => {
+                    headersText += `${name}: ${value}\n`;
+                });
+                document.getElementById('postHeaders').textContent = headersText || 'No accessible headers';
+                
+                refreshCookies();
+            } catch (error) {
+                document.getElementById('postResult').textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        async function testGet() {
+            try {
+                const response = await fetch('http://localhost/admin-book/test_session_api.php', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                document.getElementById('getResult').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('getResult').textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        function clearCookies() {
+            document.getElementById('clearResult').textContent = 'Before: ' + document.cookie;
+            document.cookie.split(";").forEach(function(c) {
+                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+            });
+            setTimeout(() => {
+                document.getElementById('clearResult').textContent += '\nAfter: ' + document.cookie;
+            }, 100);
+        }
+        
+        refreshCookies();
+    </script>
+</body>
+</html>
